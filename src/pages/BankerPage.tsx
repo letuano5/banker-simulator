@@ -108,6 +108,11 @@ export function BankerPage() {
     setLastValidState(null);
   };
 
+  const handleExportRequest = () => {
+    const content = requestVector.map((v) => v ?? 0).join(' ');
+    downloadTextFile(`request-P${requestProcessIdx}.txt`, content);
+  };
+
   const handleExport = () => {
     const content = exportBankerFile(ms.n, ms.m, ms.available, ms.max, ms.allocation);
     downloadTextFile('banker-state.txt', content);
@@ -289,7 +294,15 @@ export function BankerPage() {
                     title="Import vector từ file (1 dòng, m số)"
                   >
                     <Upload size={12} />
-                    File
+                    Import
+                  </button>
+                  <button
+                    onClick={handleExportRequest}
+                    className="mt-0.5 flex items-center gap-1 px-2 py-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-gray-300 dark:border-gray-600 whitespace-nowrap"
+                    title="Xuất request vector ra file"
+                  >
+                    <Download size={12} />
+                    Export
                   </button>
                   <input ref={requestFileRef} type="file" accept=".txt,.dat,.csv" className="hidden" onChange={handleRequestFileImport} />
                 </div>
