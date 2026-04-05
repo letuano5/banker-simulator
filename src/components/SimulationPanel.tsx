@@ -18,12 +18,13 @@ interface SimulationPanelProps {
   isDeadlock?: boolean;
   onRun: () => void;
   onHighlightChange?: (processIndex: number | undefined) => void;
+  onIsDoneChange?: (isDone: boolean) => void;
   /** Passed for Banker pages to enable custom order validation */
   validationData?: ValidationData;
 }
 
 export function SimulationPanel({
-  steps, isDeadlock = false, onRun, onHighlightChange, validationData,
+  steps, isDeadlock = false, onRun, onHighlightChange, onIsDoneChange, validationData,
 }: SimulationPanelProps) {
   const { currentStepIndex, totalSteps, isPlaying, isDone, speed, controls } =
     useSimulation(steps);
@@ -33,6 +34,10 @@ export function SimulationPanel({
   useEffect(() => {
     onHighlightChange?.(currentStep?.processIndex);
   }, [currentStep?.processIndex, onHighlightChange]);
+
+  useEffect(() => {
+    onIsDoneChange?.(isDone);
+  }, [isDone, onIsDoneChange]);
 
   // The result step is always the last one
   const resultStep = steps[steps.length - 1];

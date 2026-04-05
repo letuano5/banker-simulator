@@ -46,6 +46,7 @@ export function BankerPage() {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [lastValidState, setLastValidState] = useState<ValidationData | null>(null);
   const [requestFileError, setRequestFileError] = useState<string | null>(null);
+  const [simulationDone, setSimulationDone] = useState(false);
   const requestFileRef = useRef<HTMLInputElement>(null);
 
   // Persist UI state (mode, request) to localStorage
@@ -126,6 +127,7 @@ export function BankerPage() {
 
   const runAlgorithm = () => {
     setValidationError(null);
+    setSimulationDone(false);
     try {
       const available = validateInputVector(ms.available, 'Available');
       const max = validateInputMatrix(ms.max, 'Max');
@@ -316,11 +318,12 @@ export function BankerPage() {
           steps={steps}
           onRun={runAlgorithm}
           onHighlightChange={setHighlightRow}
+          onIsDoneChange={setSimulationDone}
           validationData={lastValidState ?? undefined}
         />
 
-        {/* Apply button — shown when request mode result is safe */}
-        {mode === 'request' && steps.length > 0 && steps[steps.length - 1].isSafe === true && (
+        {/* Apply button — shown when simulation is done and request was granted */}
+        {mode === 'request' && simulationDone && steps[steps.length - 1]?.isSafe === true && (
           <div className="mt-4 flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
             <CheckCheck size={16} className="text-green-600 dark:text-green-400 shrink-0" />
             <span className="text-sm text-green-700 dark:text-green-300 flex-1">
