@@ -33,7 +33,7 @@ export function parseBankerFile(text: string, format: ImportFormat): BankerImpor
   if (!n || !m) throw new Error('Dòng đầu phải có dạng: n m');
 
   const available: Vector = Array.from({ length: m }, (_, j) => lines[1]?.[j] ?? 0);
-  const max = parseMatrix(lines, 2, n, m);
+  let max = parseMatrix(lines, 2, n, m);
 
   let allocation: Matrix;
   let need: Matrix;
@@ -44,10 +44,11 @@ export function parseBankerFile(text: string, format: ImportFormat): BankerImpor
       Array.from({ length: m }, (_, j) => Math.max(0, max[i][j] - allocation[i][j]))
     );
   } else {
-    // max-need
-    need = parseMatrix(lines, 2 + n, n, m);
-    allocation = Array.from({ length: n }, (_, i) =>
-      Array.from({ length: m }, (_, j) => Math.max(0, max[i][j] - need[i][j]))
+    // need-allocation: line 1=available, lines 2..n+1=need, lines n+2..2n+1=allocation, max=need+allocation
+    need = parseMatrix(lines, 2, n, m);
+    allocation = parseMatrix(lines, 2 + n, n, m);
+    max = Array.from({ length: n }, (_, i) =>
+      Array.from({ length: m }, (_, j) => need[i][j] + allocation[i][j])
     );
   }
 
