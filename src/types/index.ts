@@ -28,6 +28,7 @@ export interface StepComparison {
   label: string;
   lhs: Vector;
   rhs: Vector;
+  rhsLabel?: string;
   satisfied: boolean;
 }
 

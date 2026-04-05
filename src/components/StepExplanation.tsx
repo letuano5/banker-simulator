@@ -52,7 +52,7 @@ function ComparisonView({ comparison }: { comparison: NonNullable<SimulationStep
       <span className={`font-bold ${color}`}>
         {comparison.satisfied ? '≤' : '>'}
       </span>
-      <span className="text-gray-600 dark:text-gray-400">Work</span>
+      <span className="text-gray-600 dark:text-gray-400">{comparison.rhsLabel ?? 'Work'}</span>
       <span className="text-gray-800 dark:text-gray-200">= [{comparison.rhs.join(', ')}]</span>
       <span className={`font-bold ${color}`}>
         {comparison.satisfied ? '✓' : '✗'}
