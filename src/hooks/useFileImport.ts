@@ -1,4 +1,52 @@
-import type { Matrix, Vector, ImportFormat } from '../types';
+import type { Matrix, Vector, ImportFormat, Cell } from '../types';
+
+function matrixToLines(matrix: Cell[][]): string {
+  return matrix.map((row) => row.map((v) => v ?? 0).join(' ')).join('\n');
+}
+
+function vectorToLine(vec: Cell[]): string {
+  return vec.map((v) => v ?? 0).join(' ');
+}
+
+export function exportBankerFile(
+  n: number, m: number,
+  available: Cell[], max: Cell[][], allocation: Cell[][]
+): string {
+  return [
+    `${n} ${m}`,
+    `# Available`,
+    vectorToLine(available),
+    `# Max`,
+    matrixToLines(max),
+    `# Allocation`,
+    matrixToLines(allocation),
+  ].join('\n');
+}
+
+export function exportDeadlockFile(
+  n: number, m: number,
+  available: Cell[], allocation: Cell[][], request: Cell[][]
+): string {
+  return [
+    `${n} ${m}`,
+    `# Available`,
+    vectorToLine(available),
+    `# Allocation`,
+    matrixToLines(allocation),
+    `# Request`,
+    matrixToLines(request),
+  ].join('\n');
+}
+
+export function downloadTextFile(filename: string, content: string): void {
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 interface BankerImportResult {
   n: number; m: number;

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Trash2, Upload, CheckCheck, Download } from 'lucide-react';
 import { useMatrixState } from '../hooks/useMatrixState';
 import { MatrixInput } from '../components/MatrixInput';
 import { DimensionControls } from '../components/DimensionControls';
@@ -9,6 +9,7 @@ import type { ValidationData } from '../components/SimulationPanel';
 import { runSafetyCheck } from '../lib/bankerSafety';
 import { runResourceRequest } from '../lib/bankerRequest';
 import { validateInputMatrix, validateInputVector } from '../lib/matrixUtils';
+import { exportBankerFile, downloadTextFile } from '../hooks/useFileImport';
 import type { Cell, SimulationStep, AlgorithmMode } from '../types';
 
 const UI_STORAGE_KEY = 'os-banker-ui-v1';
@@ -44,6 +45,8 @@ export function BankerPage() {
   const [highlightRow, setHighlightRow] = useState<number | undefined>(undefined);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [lastValidState, setLastValidState] = useState<ValidationData | null>(null);
+  const [requestFileError, setRequestFileError] = useState<string | null>(null);
+  const requestFileRef = useRef<HTMLInputElement>(null);
 
   // Persist UI state (mode, request) to localStorage
   useEffect(() => {
@@ -69,6 +72,44 @@ export function BankerPage() {
 
   const setRequestCell = (_row: number, col: number, value: Cell) => {
     setRequestVector((v) => { const next = [...v]; next[col] = value; return next; });
+  };
+
+  const handleRequestFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const lines = (ev.target?.result as string)
+          .split('\n')
+          .map((l) => l.trim())
+          .filter((l) => l.length > 0 && !l.startsWith('#'));
+        if (!lines[0]) throw new Error('File rỗng');
+        const nums = lines[0].split(/\s+/).map(Number);
+        if (nums.some(isNaN)) throw new Error('File chứa ký tự không phải số');
+        if (nums.length !== ms.m) throw new Error(`Cần đúng ${ms.m} phần tử, file có ${nums.length}`);
+        setRequestVector(nums);
+        setRequestFileError(null);
+      } catch (err) {
+        setRequestFileError(err instanceof Error ? err.message : 'Lỗi đọc file');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const handleApplyAllocation = () => {
+    const lastStep = steps[steps.length - 1];
+    if (!lastStep?.isSafe) return;
+    const validated = requestVector.map((v) => v as number);
+    ms.applyBankerAllocation(requestProcessIdx, validated);
+    setSteps([]);
+    setLastValidState(null);
+  };
+
+  const handleExport = () => {
+    const content = exportBankerFile(ms.n, ms.m, ms.available, ms.max, ms.allocation);
+    downloadTextFile('banker-state.txt', content);
   };
 
   const handleClearData = () => {
@@ -129,6 +170,14 @@ export function BankerPage() {
             onAddRow={ms.addRow} onAddColumn={handleAddColumn}
           />
           <FileImportButton mode="banker" onImport={ms.importBanker} />
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-gray-300 dark:border-gray-600"
+            title="Xuất trạng thái hiện tại ra file"
+          >
+            <Download size={13} />
+            Export
+          </button>
           <button
             onClick={handleClearData}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
@@ -226,11 +275,28 @@ export function BankerPage() {
                 <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                   Request[P{requestProcessIdx}]
                 </div>
-                <MatrixInput
-                  label="" data={[requestVector]}
-                  isVector={false} n={1} m={ms.m}
-                  onChange={setRequestCell}
-                />
+                <div className="flex items-start gap-2">
+                  <MatrixInput
+                    label="" data={[requestVector]}
+                    isVector={false} n={1} m={ms.m}
+                    onChange={setRequestCell}
+                  />
+                  <button
+                    onClick={() => { setRequestFileError(null); requestFileRef.current?.click(); }}
+                    className="mt-0.5 flex items-center gap-1 px-2 py-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-gray-300 dark:border-gray-600 whitespace-nowrap"
+                    title="Import vector từ file (1 dòng, m số)"
+                  >
+                    <Upload size={12} />
+                    File
+                  </button>
+                  <input ref={requestFileRef} type="file" accept=".txt,.dat,.csv" className="hidden" onChange={handleRequestFileImport} />
+                </div>
+                {requestFileError && (
+                  <div className="mt-1.5 flex items-start gap-1.5 p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-xs text-red-700 dark:text-red-300">
+                    <span className="font-bold shrink-0">Lỗi:</span>
+                    <span>{requestFileError}</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -252,6 +318,22 @@ export function BankerPage() {
           onHighlightChange={setHighlightRow}
           validationData={lastValidState ?? undefined}
         />
+
+        {/* Apply button — shown when request mode result is safe */}
+        {mode === 'request' && steps.length > 0 && steps[steps.length - 1].isSafe === true && (
+          <div className="mt-4 flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
+            <CheckCheck size={16} className="text-green-600 dark:text-green-400 shrink-0" />
+            <span className="text-sm text-green-700 dark:text-green-300 flex-1">
+              Yêu cầu được chấp thuận. Bấm <strong>Apply</strong> để cập nhật trạng thái hệ thống.
+            </span>
+            <button
+              onClick={handleApplyAllocation}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm whitespace-nowrap"
+            >
+              Apply
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

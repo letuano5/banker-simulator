@@ -207,6 +207,19 @@ export function useMatrixState(options: MatrixStateOptions) {
     setDlRequest((rq) => { const next = rq.map((r) => [...r]); next[row][col] = value; return next; });
   }, []);
 
+  // ── Apply resource request (batch update Available/Allocation/Need) ─────────
+
+  const applyBankerAllocation = useCallback((processIdx: number, request: number[]) => {
+    setAvailable((v) => v.map((cell, j) => (cell as number) - (request[j] ?? 0)) as InputVector);
+    setAllocation((al) => al.map((row, i) =>
+      i === processIdx ? row.map((cell, j) => (cell as number) + (request[j] ?? 0)) : row
+    ));
+    setNeed((nd) => nd.map((row, i) =>
+      i === processIdx ? row.map((cell, j) => (cell as number) - (request[j] ?? 0)) : row
+    ));
+    // Max = Need + Allocation stays unchanged (delta cancels out)
+  }, []);
+
   // ── File import ─────────────────────────────────────────────────────────────
 
   const importBanker = useCallback((
@@ -232,6 +245,7 @@ export function useMatrixState(options: MatrixStateOptions) {
     available, max, allocation, need,
     setAvailableCell, setMaxCell, setAllocationCell, setNeedCell,
     importBanker,
+    applyBankerAllocation,
     dlAllocation, dlRequest,
     setDlAllocationCell, setDlRequestCell,
     importDeadlock,

@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react';
+import { Trash2, Download } from 'lucide-react';
 import { useMatrixState } from '../hooks/useMatrixState';
 import { MatrixInput } from '../components/MatrixInput';
 import { DimensionControls } from '../components/DimensionControls';
@@ -6,6 +6,7 @@ import { FileImportButton } from '../components/FileImportButton';
 import { SimulationPanel } from '../components/SimulationPanel';
 import { runDeadlockDetection } from '../lib/deadlockDetection';
 import { validateInputMatrix, validateInputVector } from '../lib/matrixUtils';
+import { exportDeadlockFile, downloadTextFile } from '../hooks/useFileImport';
 import type { SimulationStep } from '../types';
 import { useState } from 'react';
 
@@ -27,6 +28,11 @@ export function DeadlockPage() {
     } catch (err) {
       setValidationError(err instanceof Error ? err.message : 'Dữ liệu không hợp lệ');
     }
+  };
+
+  const handleExport = () => {
+    const content = exportDeadlockFile(ms.n, ms.m, ms.available, ms.dlAllocation, ms.dlRequest);
+    downloadTextFile('deadlock-state.txt', content);
   };
 
   const handleClearData = () => {
@@ -61,6 +67,14 @@ export function DeadlockPage() {
             onAddRow={ms.addRow} onAddColumn={ms.addColumn}
           />
           <FileImportButton mode="deadlock" onImport={ms.importDeadlock} />
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-gray-300 dark:border-gray-600"
+            title="Xuất trạng thái hiện tại ra file"
+          >
+            <Download size={13} />
+            Export
+          </button>
           <button
             onClick={handleClearData}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
