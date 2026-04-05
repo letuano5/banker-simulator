@@ -1,5 +1,5 @@
 import type { Vector, Matrix } from '../types';
-import { vectorLte, vectorAdd, formatVector } from './matrixUtils';
+import { vectorLte, vectorAdd } from './matrixUtils';
 
 export interface OrderValidationStep {
   processIndex: number;
