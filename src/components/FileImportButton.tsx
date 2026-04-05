@@ -105,6 +105,7 @@ export function FileImportButton(props: FileImportButtonProps) {
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Lỗi đọc file');
+        setShowModal(true);
       }
     };
     reader.readAsText(file);
