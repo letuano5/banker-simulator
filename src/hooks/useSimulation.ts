@@ -5,6 +5,8 @@ interface SimulationControls {
   play: () => void;
   pause: () => void;
   step: () => void;
+  stepBack: () => void;
+  goToStep: (index: number) => void;
   reset: () => void;
   setSpeed: (ms: number) => void;
 }
@@ -78,6 +80,16 @@ export function useSimulation(steps: SimulationStep[]): UseSimulationReturn {
     setCurrentStepIndex((prev) => Math.min(prev + 1, steps.length - 1));
   }, [pause, steps.length]);
 
+  const stepBack = useCallback(() => {
+    pause();
+    setCurrentStepIndex((prev) => Math.max(prev - 1, -1));
+  }, [pause]);
+
+  const goToStep = useCallback((index: number) => {
+    pause();
+    setCurrentStepIndex(Math.max(-1, Math.min(index, steps.length - 1)));
+  }, [pause, steps.length]);
+
   const reset = useCallback(() => {
     pause();
     setCurrentStepIndex(-1);
@@ -100,6 +112,6 @@ export function useSimulation(steps: SimulationStep[]): UseSimulationReturn {
     isPlaying,
     isDone,
     speed,
-    controls: { play, pause, step, reset, setSpeed },
+    controls: { play, pause, step, stepBack, goToStep, reset, setSpeed },
   };
 }

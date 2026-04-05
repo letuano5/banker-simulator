@@ -1,4 +1,4 @@
-import { Play, Pause, SkipForward, RotateCcw } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, RotateCcw } from 'lucide-react';
 
 interface SimulationControlsProps {
   isPlaying: boolean;
@@ -9,6 +9,7 @@ interface SimulationControlsProps {
   onPlay: () => void;
   onPause: () => void;
   onStep: () => void;
+  onStepBack: () => void;
   onReset: () => void;
   onSpeedChange: (ms: number) => void;
   onRun: () => void;
@@ -20,7 +21,7 @@ const MAX_MS = 3000;
 
 export function SimulationControls({
   isPlaying, isDone, currentStepIndex, totalSteps,
-  speed, onPlay, onPause, onStep, onReset, onSpeedChange, onRun, hasResult,
+  speed, onPlay, onPause, onStep, onStepBack, onReset, onSpeedChange, onRun, hasResult,
 }: SimulationControlsProps) {
   const handleNumberInput = (raw: string) => {
     const v = parseInt(raw, 10);
@@ -58,6 +59,16 @@ export function SimulationControls({
             title={isPlaying ? 'Dừng' : 'Phát tự động'}
           >
             {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+          </button>
+
+          {/* Step back */}
+          <button
+            onClick={onStepBack}
+            disabled={currentStepIndex <= -1}
+            className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-40"
+            title="Bước trước"
+          >
+            <SkipBack size={16} />
           </button>
 
           {/* Step forward */}

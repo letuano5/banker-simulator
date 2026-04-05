@@ -54,6 +54,7 @@ export function SimulationPanel({
         onPlay={controls.play}
         onPause={controls.pause}
         onStep={controls.step}
+        onStepBack={controls.stepBack}
         onReset={controls.reset}
         onSpeedChange={controls.setSpeed}
         onRun={onRun}
@@ -69,7 +70,11 @@ export function SimulationPanel({
               <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
               Các bước thực hiện
             </div>
-            <StepExplanation steps={steps} currentStepIndex={currentStepIndex} />
+            <StepExplanation
+              steps={steps}
+              currentStepIndex={currentStepIndex}
+              onStepClick={controls.goToStep}
+            />
           </div>
 
           {/* Right: Execution order (40%) */}

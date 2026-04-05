@@ -4,6 +4,7 @@ import type { SimulationStep } from '../types';
 interface StepExplanationProps {
   steps: SimulationStep[];
   currentStepIndex: number;
+  onStepClick?: (index: number) => void;
 }
 
 const stepTypeStyle: Record<string, string> = {
@@ -60,7 +61,7 @@ function ComparisonView({ comparison }: { comparison: NonNullable<SimulationStep
   );
 }
 
-export function StepExplanation({ steps, currentStepIndex }: StepExplanationProps) {
+export function StepExplanation({ steps, currentStepIndex, onStepClick }: StepExplanationProps) {
   const currentRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -83,13 +84,19 @@ export function StepExplanation({ steps, currentStepIndex }: StepExplanationProp
       {visibleSteps.map((step, idx) => {
         const isCurrent = idx === visibleSteps.length - 1;
         const style = stepTypeStyle[step.type] ?? stepTypeStyle.init;
+        const clickable = onStepClick != null && !isCurrent;
 
         return (
           <div
             key={idx}
             ref={isCurrent ? currentRef : undefined}
+            onClick={clickable ? () => onStepClick(idx) : undefined}
             className={`rounded-lg border p-3 transition-all ${style} ${
-              isCurrent ? 'ring-2 ring-blue-400 dark:ring-blue-500 shadow-sm' : 'opacity-70'
+              isCurrent
+                ? 'ring-2 ring-blue-400 dark:ring-blue-500 shadow-sm'
+                : clickable
+                  ? 'opacity-60 hover:opacity-90 cursor-pointer hover:shadow-sm'
+                  : 'opacity-70'
             }`}
           >
             <div className="flex items-center gap-2 mb-1.5">
